@@ -8,7 +8,7 @@ library(mosaic)
 library(stringr)
 library(RColorBrewer)
 
-setwd("/Users/amf198/Documents/ProjectNotes/Project_Paf1C_Depletion_4tU/Paf1CAIDPhenotyping/GrowthCurves/GC_Data/")
+# setwd("E:/GitHub/GrowthCurveAnalysis/GC_Data/")
 # Set colorscheme
 {
   
@@ -264,7 +264,8 @@ GC_Data_Longer <- GC_Data_Longer[GC_Data_Longer$Mutant_BioRep != "Rtf1-AID_2",]
   slopes$DT <- (1/slopes$Slope)
   
   DTMatrix <- as.data.frame(cbind(Mutant = slopes$Mutant, 
-                                  BioRep_Index = str_remove(str_remove(slopes$BioRep_Index, "_YPD"), "_Aux"), 
+                                  BioRep_Index = str_remove( str_remove(str_remove(slopes$BioRep_Index, "_YPD"), "_Aux"), 
+                                                             "_Veh"), 
                                   Media = slopes$Media,
                                   Target = slopes$Target,
                                   DT = slopes$DT))
@@ -277,11 +278,6 @@ DTMatrix$DT <- as.numeric(DTMatrix$DT)
 
 DTMatrix <- DTMatrix[order(DTMatrix$BioRep_Index),]
 attach(DTMatrix)
-# constructing matricies for DT comparisons by Tag Presence and Condition
-DTMatrix_export <- as.data.frame(cbind(Mutant = slopes[slopes$Media == "YPD",2], BioRep_Index = str_remove(slopes[slopes$Media == "YPD",1], "_YPD"), YPD_DT = slopes[slopes$Media == "YPD",]$DT,
-                                       Aux_DT = slopes[slopes$Media == "YPD_Aux",]$DT))
-DTMatrix_export$DifDT <- (as.numeric(DTMatrix_export$Aux_DT) - as.numeric(DTMatrix_export$YPD_DT))
-write.csv(DTMatrix_export, file = "DTMatrix_summary.csv")
 
 DTMatrix
 
@@ -300,7 +296,7 @@ DT_plot <- ggplot(DTMatrix_avg, aes(x=Mutant, y=meanDT, group=Media, fill = Muta
   scale_fill_manual(values = cols) + 
   geom_point(data = DTMatrix, aes(x=Mutant, y=DT, group=Media, fill = Mutant, color = Media),
              position=position_dodge(.7) ) +
-  scale_color_manual(values = c("grey50", "grey20"))
+  scale_color_manual(values = c("grey50", "grey20", "grey10"))
 ggsave(width = 25, height = 6, "../res/DT_plot.pdf", DT_plot)
 
 # looking at data in a bio-rep paired manner
