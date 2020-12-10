@@ -5,18 +5,23 @@ library(mgcv)
 library(lubridate)  
 library(inflection)  
 library(mosaic)
-
+library(stringr)
+library(RColorBrewer)
 
 setwd("/Users/amf198/Documents/ProjectNotes/Project_Paf1C_Depletion_4tU/Paf1CAIDPhenotyping/GrowthCurves/GC_Data/")
 # Set colorscheme
 {
   
-  unique(GC_Data_Longer$Mutant)
-  cols <- c("WT" =  "black", "Paf1-AID-osTIR" = "goldenrod2", "Paf1-AID osTIR" = "lightgoldenrod4",
-            "paf1D" = "darkgoldenrod4", "Blank" =  "grey",
-            "Rtf1-AID-osTIR" = "deeppink", "Rtf1-AID" = "coral", "rtf1D" = "red",
-            "Ctr9-AID-osTIR" = "orange", "Ctr9-AID" = "sienna1", "ctr9D" = "orangered",
-            "Cdc73-AID-osTIR" = "blue", "Cdc73-AID" = "lightblue", "cdc73D" = "navy")    
+  #unique(GC_Data_Longer$Mutant)
+  cols <- c("WT" =  "grey60", 
+            "Paf1-AID" = "#F5E733", "Paf1-AID-osTIR" = "#D1C52A", "paf1D" = "#9B921F", "Blank" =  "grey",
+            "Rtf1-AID" = "#55CA61", "Rtf1-AID-osTIR" = "#409B4A",  "rtf1D" = "#2B6A32",
+            "htz1D_Rtf1-AID" = "#48C9B0", "htz1D_Rtf1-AID-osTIR" = "#17A589",  "htz1D" = "#117864",
+            "Ctr9-AID" = "#F7AE3F", "Ctr9-AID-osTIR" = "#CC9239",  "ctr9D" = "#A67831",
+            "Cdc73-AID" = "#549EFC","Cdc73-AID-osTIR" = "#4586D9",  "cdc73D" = "#3D6394",
+            "Leo1-AID" = "#EE46E9","Leo1-AID-osTIR" = "#CE3ECA",  "leo1D" = "#8E2A8B",
+            "1" = "black", "2" = "red", "3" = "blue", "4" = "green" )  
+
 }
 
 # Load Data and Data Keys
@@ -26,6 +31,7 @@ setwd("/Users/amf198/Documents/ProjectNotes/Project_Paf1C_Depletion_4tU/Paf1CAID
 # a template, and makes everything work pretty smoothly
 # make note of any wells that were dropped from the original Data 
 
+{
 GC_Data_Key_001 <- read.csv("DataKeys/CtCdGCDataKey_001.csv", header = T, sep = ",")
 GC_Data_Key_001$Observation_Index <- paste(GC_Data_Key_001$Plate_Num, "_", GC_Data_Key_001$Well, sep = '')
 GC_Data_Key_001$Condition <-  paste(GC_Data_Key_001$Mutant, "_", GC_Data_Key_001$Media, sep = '')
@@ -51,28 +57,92 @@ GC_Data_003 <- read.csv("DataTables/PaRtGCData_003.csv", header = T, sep = ",")
 GC_Data_003 <- pivot_longer(GC_Data_003, -Time, names_to = "Well", values_to = "OD600" )
 GC_Data_003_Longer <-merge(GC_Data_003, GC_Data_Key_003, by.x = 'Well', by.y = 'Well')
 
-GC_Data_Longer <- rbind(GC_Data_001_Longer, GC_Data_002_Longer, GC_Data_003_Longer)
-GC_Data_Longer
+GC_Data_Key_004 <- read.csv("DataKeys/CtLeGCDataKey_004.csv", header = T, sep = ",")
+GC_Data_Key_004$Observation_Index <- paste(GC_Data_Key_004$Plate_Num, "_", GC_Data_Key_004$Well, sep = '')
+GC_Data_Key_004$Condition <-  paste(GC_Data_Key_004$Mutant, "_", GC_Data_Key_004$Media, sep = '')
+GC_Data_Key_004$BioRep_Index <-  paste(GC_Data_Key_004$Condition, "_", GC_Data_Key_004$BioRep, sep = '')
+GC_Data_004 <- read.csv("DataTables/CtLeGCData_004.csv", header = T, sep = ",")
+GC_Data_004 <- pivot_longer(GC_Data_004, -Time, names_to = "Well", values_to = "OD600" )
+GC_Data_004_Longer <-merge(GC_Data_004, GC_Data_Key_004, by.x = 'Well', by.y = 'Well')
 
-# sets plate ID to examine if you are into that kind of thing
-Plate = (GC_Data_Longer$Plate_Num == "2")
-Plate1 = (GC_Data_Longer$Plate_Num == "1")
-Plate2 = (GC_Data_Longer$Plate_Num == "2")
-Plate3 = (GC_Data_Longer$Plate_Num == "3")
-IncludeWT <- (GC_Data_Longer$Mutant == as.character("WT"))
+GC_Data_Key_005 <- read.csv("DataKeys/RtRthGCDataKey_005.csv", header = T, sep = ",")
+GC_Data_Key_005$Observation_Index <- paste(GC_Data_Key_005$Plate_Num, "_", GC_Data_Key_005$Well, sep = '')
+GC_Data_Key_005$Condition <-  paste(GC_Data_Key_005$Mutant, "_", GC_Data_Key_005$Media, sep = '')
+GC_Data_Key_005$BioRep_Index <-  paste(GC_Data_Key_005$Condition, "_", GC_Data_Key_005$BioRep, sep = '')
+GC_Data_005 <- read.csv("DataTables/RtRthGCData_005.csv", header = T, sep = ",")
+GC_Data_005 <- pivot_longer(GC_Data_005, -Time, names_to = "Well", values_to = "OD600" )
+GC_Data_005_Longer <-merge(GC_Data_005, GC_Data_Key_005, by.x = 'Well', by.y = 'Well')
+
+GC_Data_Key_006 <- read.csv("DataKeys/RthLeGCDataKey_006.csv", header = T, sep = ",")
+GC_Data_Key_006$Observation_Index <- paste(GC_Data_Key_006$Plate_Num, "_", GC_Data_Key_006$Well, sep = '')
+GC_Data_Key_006$Condition <-  paste(GC_Data_Key_006$Mutant, "_", GC_Data_Key_006$Media, sep = '')
+GC_Data_Key_006$BioRep_Index <-  paste(GC_Data_Key_006$Condition, "_", GC_Data_Key_006$BioRep, sep = '')
+GC_Data_006 <- read.csv("DataTables/RthLeGCData_006.csv", header = T, sep = ",")
+GC_Data_006 <- pivot_longer(GC_Data_006, -Time, names_to = "Well", values_to = "OD600" )
+GC_Data_006_Longer <-merge(GC_Data_006, GC_Data_Key_006, by.x = 'Well', by.y = 'Well')
+
+}
+
+# appends data from tables together
+GC_Data_Longer <- rbind(GC_Data_001_Longer, GC_Data_002_Longer, 
+                        GC_Data_003_Longer, GC_Data_004_Longer, 
+                        GC_Data_005_Longer, GC_Data_006_Longer)
+
+# Ties the genetic mutant to the biorep to keep track of which pairwise conditions came from the same colony/culture
+GC_Data_Longer$Mutant_BioRep <- paste0(GC_Data_Longer$Mutant, "_" ,GC_Data_Longer$BioRep)
 
 # Numerifies Time column and calculates mean by techincial and biological replicate
 {
-  GC_Data_Longer$Time <-(as.numeric(hms(GC_Data_Longer$Time)))/(60*60)
+  GC_Data_Longer$Time <- (as.numeric(hms(GC_Data_Longer$Time)))/(60*60)
   # aggregate by time for everything but Observation Index to average multiple tech reps
   GC_Data_Long <- aggregate(OD600 ~ Time + Plate_Num + Condition + Target + Mutant + Media + BioRep_Index, data = GC_Data_Longer, mean)
-  
+  GC_Data_Long$sdByTechRep <- aggregate(OD600 ~ Time + Plate_Num + Condition + Target + Mutant + Media + BioRep_Index, data = GC_Data_Longer, sd)$OD600
+  GC_Data_Long$sdByTechRep[is.na(GC_Data_Long$sdByTechRep)] <- 0
   # aggregate by time for everything but BioRep Index to average multiple biological reps
-  GC_Data_Reduced <- aggregate(OD600 ~ Time + Plate_Num + Condition + Target + Mutant + Media , data = GC_Data_Long, mean)
+  GC_Data_Reduced <- aggregate(OD600 ~ Time + Condition + Target + Mutant + Media , data = GC_Data_Long, mean)
+  GC_Data_Reduced$sdByBioRep <- aggregate(OD600 ~ Time + Condition + Target + Mutant + Media , data = GC_Data_Long, sd)$OD600
   GC_Data_Reduced$ConditionByPlate <- paste(GC_Data_Reduced$Condition, GC_Data_Reduced$Plate_Num)
+  GC_Data_Reduced$sdByBioRep[is.na(GC_Data_Reduced$sdByBioRep)] <- 0
+}
+attach(GC_Data_Long)
+GC_Data_Long[Plate_Num == "6",]
+# Keeps an untrimmed version for posterity
+GC_Data_Longer_Untrimmed <- GC_Data_Longer
+# removes Rtf1-AID BioRep2 bc of wierdness
+GC_Data_Longer <- GC_Data_Longer[GC_Data_Longer$Mutant_BioRep != "Rtf1-AID_2",]
+
+
+# Plate check chunk
+{
+  # sets plate ID to examine if you are into that kind of thing
+  Plate <- 6
+  ggplot(GC_Data_Longer[GC_Data_Longer$Plate_Num == Plate & GC_Data_Longer$Target != "Blank",], aes(x=Time, y=OD600, color = `Mutant`, group = `Observation_Index`)) +  
+    geom_line(aes(linetype = `Media`), alpha=0.8, size = 1 ) + theme_bw(base_size = 15) +
+    ggtitle(paste0("Data from Plate ", Plate)) +
+    scale_colour_manual(values = cols) +  xlim(0,25) +  ylim(0,2.5) + facet_wrap(~Mutant, ncol = 3)
+  
+  ggplot(GC_Data_Long[GC_Data_Long$Plate_Num == Plate,], aes(x=Time, y=OD600, color = `Mutant`, group = `BioRep_Index`)) +  
+    geom_line(aes(linetype = `Media`), alpha=0.8, size = 1 ) + theme_bw(base_size = 15) +
+    ggtitle(paste0("Data from Plate ", Plate)) +
+    scale_colour_manual(values = cols) +  xlim(0,25) +  ylim(0,2.5) + facet_wrap(~Mutant, ncol = 3)
 }
 
+{
+  ggplot(GC_Data_Longer[GC_Data_Longer$Target != "Blank",], aes(x=Time, y=OD600, color = `Mutant`, group = `Observation_Index`)) +  
+    geom_line(aes(linetype = `Media`), alpha=0.8, size = .7 ) + theme_bw(base_size = 15) +
+    scale_colour_manual(values = cols) +  xlim(0,25) +  ylim(0,2.5) + facet_wrap(~Mutant, ncol = 3)
+  
+  ggplot(GC_Data_Long[GC_Data_Longer$Target != "Blank",], aes(x=Time, y=OD600, color = `Mutant`, group = `BioRep_Index`)) +  
+    geom_line(aes(linetype = `Media`), alpha=0.8, size = 1 ) + theme_bw(base_size = 15) +
+    scale_colour_manual(values = cols) +  xlim(0,25) +  ylim(0,2.5) + facet_wrap(~Mutant, ncol = 3)
+  
+  ggplot(GC_Data_Reduced[GC_Data_Reduced$Target != "Blank",], aes(x=Time, y=OD600, color = `Mutant`, group = ConditionByPlate)) +  
+    geom_line(aes(linetype = `Media`), alpha=0.8, size = 1 ) + theme_bw(base_size = 15) + geom_ribbon(aes(ymin=(OD600 - sdByBioRep), ymax=(OD600 + sdByBioRep), alpha = .05), linetype="blank", alpha=0.2)+
+    scale_colour_manual(values = cols) + scale_fill_manual(values = cols)+  xlim(0,25) +  ylim(0,2.5) + facet_wrap(~Target, ncol = 3)
 
+}
+
+# ifelse(GC_Data_Reduced$Target == "Rtf1", "Rtf1isTarget", "Rtf1isnotTarget")
 
 # Extract Slopes!
 {
@@ -90,412 +160,200 @@ IncludeWT <- (GC_Data_Longer$Mutant == as.character("WT"))
     NoIPDatasets <- inflectionPointMatrix[rowSums(is.na(inflectionPointMatrix)) != 0,]
     inflectionPointMatrix <- inflectionPointMatrix[rowSums(is.na(inflectionPointMatrix)) == 0,]
   }
+  
   # prints out if there are some datasets without an Inflection point
   NoIPDatasets
   # plots IP-less curves for visual inspection
   ggplot(GC_Data_Long[GC_Data_Long$BioRep_Index == NoIPDatasets$BioRep_Index,], aes(x=Time, y=OD600, color = `Mutant`, group = `BioRep_Index`)) +  
     geom_line(aes(linetype = `Media`), alpha=0.8, size = 1 ) + theme_bw(base_size = 15) +
-    scale_colour_manual(values = cols) +  xlim(0,24) +  ylim(0,2.5)
+    scale_colour_manual(values = cols) +  xlim(0,25) +  ylim(0,2.5)
   
+  # visualizing the pieces of curves that will be 
+  # transforming Datasets to align with midpoint at T = 14
+  GC_Data_Long_IP <- merge(GC_Data_Long, inflectionPointMatrix[,c(1,4)], by.x = 'BioRep_Index', by.y = 'BioRep_Index')
+  GC_Data_Long_IP$Time = (GC_Data_Long_IP$Time - GC_Data_Long_IP$inflectionPoint)
+  GC_Data_Long_IP$BioRep <- str_sub(GC_Data_Long_IP$BioRep_Index, -1)
+  
+  # plotting the curves shifted to align with midpoints and with a grey rectangle highlighting the line segment used for extracting slopes
+  IPShifted_plot_log2 <- ggplot(GC_Data_Long_IP[GC_Data_Long_IP$Target != "Blank",], aes(x=Time, y=log2(OD600), color = `Mutant`, group = `BioRep_Index`)) +  
+    geom_line(aes(linetype = `Media`), alpha=0.8, size = .5 ) + theme_bw(base_size = 8) +
+    scale_colour_manual(values = cols) +  xlim(-14,14) +  ylim(-4,2.5) + facet_wrap(~Mutant, ncol = 3) + geom_vline(xintercept = 0 ) +
+    annotate("rect", xmin = -4, xmax = -1, ymin = -4, ymax = 2.5,
+             alpha = .2)
+  ggsave(width = 10, height = 20, "../res/IPShifted_plot_log2.pdf", IPShifted_plot_log2)
+  
+  IPShifted_plot <- ggplot(GC_Data_Long_IP[GC_Data_Long_IP$Target != "Blank",], aes(x=Time, y=OD600, color = `Mutant`, group = `BioRep_Index`)) +  
+    geom_line(aes(linetype = `Media`), alpha=0.8, size = .5 ) + theme_bw(base_size = 8) +
+    scale_colour_manual(values = cols) +  xlim(-14,14) +  ylim(0,2.5) + facet_wrap(~Mutant, ncol = 3) + geom_vline(xintercept = 0 ) +
+    annotate("rect", xmin = -4, xmax = -1, ymin = 0, ymax = 2.5,
+             alpha = .2)
+  ggsave(width = 10, height = 20, "../res/IPShifted_plot.pdf", IPShifted_plot)
+  
+
   GC_Long_IP <-  merge(GC_Data_Long, inflectionPointMatrix[,-2], by.x = 'BioRep_Index',  by.y = 'BioRep_Index' )
   Data_subset <- GC_Long_IP[(GC_Long_IP$Time > (GC_Long_IP$inflectionPoint - 3.48) & GC_Long_IP$Time < (GC_Long_IP$inflectionPoint - 0.48)),]
-
+  
   # # Uncomment the lines below to check to see how your cut curves look
   # full traces of untransformed data
-  ggplot(GC_Data_Long, aes(x=Time, y=OD600, color = `Mutant`, group = `BioRep_Index`)) +  
-    geom_line(aes(linetype = `Media`), alpha=0.8, size = 1 ) + theme_bw(base_size = 15) +
-    scale_colour_manual(values = cols) +  xlim(0,24) +  ylim(0,2.5)
+  allData_plot <- ggplot(GC_Data_Long[GC_Data_Long$Target != "Blank",], aes(x=Time, y=OD600, color = `Mutant`, group = `BioRep_Index`)) +  
+    geom_line(aes(linetype = `Media`), alpha=0.8, size = .5 ) + theme_bw(base_size = 8) + geom_ribbon(aes(ymin=(OD600 - sdByTechRep), ymax=(OD600 + sdByTechRep), alpha = .2), linetype="blank", alpha=0.2)+
+    scale_colour_manual(values = cols) +  xlim(0,25) +  ylim(0,2.5) + facet_wrap(~Mutant, ncol = 3)
+  ggsave(width = 10, height = 20, "../res/allData_plot.pdf", allData_plot)
+  
+  
+
+        
+        
+  # full traces of log2 transformed data
+  allData_plot_log2 <- ggplot(GC_Data_Long[GC_Data_Long$Target != "Blank",], aes(x=Time, y=log2(OD600), color = `Mutant`, group = `BioRep_Index`)) +  
+    geom_line(aes(linetype = `Media`), alpha=0.8, size = .5 ) + theme_bw(base_size = 8) +
+    scale_colour_manual(values = cols) +  xlim(0,25) +  ylim(-2.5,2) + facet_wrap(~Mutant, ncol = 3)
+  ggsave(width = 10, height = 20, "../res/allData_plot_log2.pdf", allData_plot_log2)
+  
+  allData_Reduced_plot <-  ggplot(GC_Data_Reduced[GC_Data_Reduced$Target != "Blank",], aes(x=Time, y=OD600, color = `Mutant`, group = ConditionByPlate)) +  
+    geom_line(aes(linetype = `Media`), alpha=0.8, size = 1 ) + 
+    theme_bw(base_size = 15) + 
+    geom_ribbon(aes(ymin=(OD600 - sdByBioRep),
+                    ymax=(OD600 + sdByBioRep), 
+                    alpha = .05), linetype="F1", 
+                alpha=0.2, size = .3) +
+    scale_colour_manual(values = cols) + scale_fill_manual(values = cols)+  xlim(0,25) +  ylim(0,2.5) + facet_wrap(~Mutant, ncol = 3)
+  ggsave(width = 10, height = 20, "../res/allData_Reduced_plot.pdf", allData_Reduced_plot)
   
   # cut traces from untransformed data
-  ggplot(Data_subset, aes(x=Time, y=OD600, color = `Mutant`, group = `BioRep_Index`)) +  
+  cutTrace_plot <- ggplot(Data_subset, aes(x=Time, y=OD600, color = `Mutant`, group = `BioRep_Index`)) +  
     geom_line(aes(linetype = `Media`), alpha=0.8, size = 1 ) + theme_bw(base_size = 15) +
-    scale_colour_manual(values = cols)  +  xlim(0,24) +  ylim(0,2.5)
+    scale_colour_manual(values = cols)  +  xlim(0,25) +  ylim(0,2.5) + facet_wrap(~Mutant, ncol = 3)
+  ggsave(width = 10, height = 20, "../res/cutTrace_plot.pdf", cutTrace_plot)
   
-  # full traces of log2 transformed data
-  ggplot(GC_Data_Long[GC_Data_Long$BioRep_Index == "rtf1D_YPD_Aux_4",], aes(x=Time, y=log2(OD600), color = `Mutant`, group = `BioRep_Index`)) +  
+  # cut traces from log2 transformed data
+  cutTrace_plot_log2 <- ggplot(Data_subset, aes(x=Time, y=log2(OD600), color = `Mutant`, group = `BioRep_Index`)) +  
     geom_line(aes(linetype = `Media`), alpha=0.8, size = 1 ) + theme_bw(base_size = 15) +
-    scale_colour_manual(values = cols)
+    scale_colour_manual(values = cols)  +  xlim(0,25) +  ylim(-2.5,2.5) + facet_wrap(~Mutant, ncol = 3)
+  ggsave(width = 10, height = 20, "../res/cutTrace_plot_log2.pdf", cutTrace_plot_log2)
+
+  # making plate-specific plots to view tech rep data
+  for (i in unique(GC_Data_Longer$Plate_Num)) {
+    Plot_path <-  paste("../res/DataByPlate/PlatePlot_", i, ".pdf", sep = "")
+    print(Plot_path)
+    tempPlot <-  ggplot(GC_Data_Longer[GC_Data_Longer$Plate_Num == as.character(i) ,], aes(x=Time, y=OD600, color = as.factor(`BioRep`), group = `Observation_Index`)) +
+      geom_line(aes(linetype = `Media`), alpha=0.8, size = 1) + theme_bw(base_size = 12) +
+      ggtitle(paste0("Data from Plate ", i)) +
+      xlim(0,25) +  ylim(0,2.5) + facet_wrap(~Mutant)
+    ggsave(width = 10, height = 8, Plot_path, tempPlot)
+  }
   
-  # cut traces of log2 transformed data
-  ggplot(Data_subset[Data_subset$Mutant == "paf1D",], aes(x=Time, y=log2(OD600), color = `Mutant`, group = `BioRep_Index`)) +  
-    geom_line(aes(linetype = `Media`), alpha=0.8, size = 1 ) + theme_bw(base_size = 15) +
-    scale_colour_manual(values = cols)  +  xlim(0,24) 
-  
-  ggplot(Data_subset[Data_subset$Mutant == as.character("Ctr9-AID-osTIR"),], aes(x=Time, y=log2(OD600), color = `Mutant`, group = `BioRep_Index`)) +  
-    geom_line(aes(linetype = `Media`), alpha=0.8, size = 1 ) + theme_bw(base_size = 15) +
-    scale_colour_manual(values = cols) +  xlim(0,24) +  ylim(-3,1)
-  
+  # making plots by target
+  for (i in unique(GC_Data_Long$Target)) {
+    Plot_path <-  paste("../res/DataByTargetGene/TargetPlot_", i, ".pdf", sep = "")
+    print(Plot_path)
+    tempPlot <- ggplot(GC_Data_Long[GC_Data_Long$Target == i,], aes(x=Time, y=OD600, color = Mutant, group = `BioRep_Index`)) +
+      geom_line(aes(linetype = `Media`), alpha=0.8, size = 1) + theme_bw(base_size = 8) +
+      ggtitle(paste0(i, "Data")) + scale_color_manual(values = cols) +
+      xlim(0,25) +  ylim(0,2.5) + facet_wrap(~Mutant)
+    ggsave(width =20, height = 5, Plot_path, tempPlot)
+  }
+
   slopes <- as.data.frame(Data_subset %>% 
-                            group_by(BioRep_Index, Media) %>% 
+                            group_by(BioRep_Index, Mutant, Media, Target) %>% 
                             do({
                               mod = lm(log2(OD600) ~ Time, data = .)
                               data.frame(Intercept = coef(mod)[1],
                                          Slope = coef(mod)[2])
                             }))
   slopes$DT <- (1/slopes$Slope)
-  DTMatrix <- as.data.frame(cbind(BioRep = slopes[slopes$Media == "YPD",c(1)], YPD_DT = slopes[slopes$Media == "YPD",c(5)],
-                                  Aux_DT = slopes[slopes$Media == "YPD_Aux",5]))
-  DTMatrix$DifDT <- (as.numeric(DTMatrix$Aux_DT) - as.numeric(DTMatrix$YPD_DT))
-  write.csv(DTMatrix, file = "DTMatrix_summary.csv")
+  
+  DTMatrix <- as.data.frame(cbind(Mutant = slopes$Mutant, 
+                                  BioRep_Index = str_remove(str_remove(slopes$BioRep_Index, "_YPD"), "_Aux"), 
+                                  Media = slopes$Media,
+                                  Target = slopes$Target,
+                                  DT = slopes$DT))
 }
 
+Data_subset[Data_subset$BioRep_Index == "htz1D_Rtf1-AID-osTIR_YPD_1",]
+
+DTMatrix$BioRep <- str_sub(DTMatrix$BioRep_Index, -1)
+DTMatrix$DT <- as.numeric(DTMatrix$DT)
+
+DTMatrix <- DTMatrix[order(DTMatrix$BioRep_Index),]
+attach(DTMatrix)
 # constructing matricies for DT comparisons by Tag Presence and Condition
+DTMatrix_export <- as.data.frame(cbind(Mutant = slopes[slopes$Media == "YPD",2], BioRep_Index = str_remove(slopes[slopes$Media == "YPD",1], "_YPD"), YPD_DT = slopes[slopes$Media == "YPD",]$DT,
+                                       Aux_DT = slopes[slopes$Media == "YPD_Aux",]$DT))
+DTMatrix_export$DifDT <- (as.numeric(DTMatrix_export$Aux_DT) - as.numeric(DTMatrix_export$YPD_DT))
+write.csv(DTMatrix_export, file = "DTMatrix_summary.csv")
 
 DTMatrix
 
-ggplot(testdata, aes(x=Time, y=log2(OD600), color = `Mutant`, group = `BioRep_Index`)) +  
-  geom_line(aes(linetype = `Media`), alpha=0.8, size = 1 ) + theme_bw(base_size = 15) +
-  scale_colour_manual(values = cols)  +  xlim(0,24) 
-
-# modeling troubleshooting
-{
-  GC_Curve_Fits <- as.data.frame(GC_Data_Long %>% 
-                                   group_by(BioRep_Index) %>% 
-                                   do({
-                                     mod = lm(log2(OD600) ~ Time + I(Time^2) + I(Time^3) + I(Time^4) + I(Time^5) + I(Time^6), data = .)
-                                     modFun <- makeFun(mod)
-                                     data.frame(Intercept = coef(mod)[1],
-                                                Coef1 = coef(mod)[2],
-                                                Coef2 = coef(mod)[3],
-                                                Coef3 = coef(mod)[4],
-                                                Coef4 = coef(mod)[5],
-                                                Coef5 = coef(mod)[6],
-                                                Coef6 = coef(mod)[7])
-                                   }))
-  
-  GC_Curve_Fit_Derivative <- as.data.frame(GC_Curve_Fits$BioRep_Index)
-  GC_Curve_Fit_Derivative$Intercept <- (GC_Curve_Fits$Coef1)
-  colnames(GC_Curve_Fit_Derivative) <- c("BioRep_Index", "Intercept")
-  GC_Curve_Fit_Derivative$Coef1 <- (2 * GC_Curve_Fits$Coef2)
-  GC_Curve_Fit_Derivative$Coef2 <- (3 * GC_Curve_Fits$Coef3)
-  GC_Curve_Fit_Derivative$Coef3 <- (4 * GC_Curve_Fits$Coef4)
-  GC_Curve_Fit_Derivative$Coef4 <- (5 * GC_Curve_Fits$Coef5)
-  GC_Curve_Fit_Derivative$Coef5 <- (6 * GC_Curve_Fits$Coef6)
-  
-  # as.data.frame(GC_Curve_Fit_Derivative %>% 
-  #                 group_by(BioRep_Index) %>% 
-  #                 do({
-  #                   curve
-  #                   data.frame(Intercept = coef(mod)[1],
-  #                              Coef1 = coef(mod)[2],
-  #                              Coef2 = coef(mod)[3],
-  #                              Coef3 = coef(mod)[4],
-  #                              Coef4 = coef(mod)[5],
-  #                              Coef5 = coef(mod)[6],
-  #                              Coef6 = coef(mod)[7])
-  #                 }))  
-
-coeffs <- GC_Curve_Fits[GC_Curve_Fits$BioRep_Index == "WT_YPD_1",]
-fun1 <- function(x) {(coeffs$Intercept + (coeffs$Coef1 * x) + (coeffs$Coef2 * x^2) + 
-                        (coeffs$Coef3 * x^3) + (coeffs$Coef4 * x^4) + (coeffs$Coef5 * x^5) +
-                        (coeffs$Coef6 * x^6))}
-
-Dcoeffs <- GC_Curve_Fit_Derivative[GC_Curve_Fit_Derivative$BioRep_Index == "WT_YPD_1",]
-fun4 <- function(x) {(Dcoeffs$Intercept + (Dcoeffs$Coef1 * x) + (Dcoeffs$Coef2 * x^2) + 
-                (Dcoeffs$Coef3 * x^3) + (Dcoeffs$Coef4 * x^4) + (Dcoeffs$Coef5 * x^5))}
-
-curve(2^(fun1(x)), xlim = c(.5,24), ylim = c(-1,2)) 
-curve(fun1(x), xlim = c(.5,24)) 
-curve(fun4(x), xlim = c(.5,24)) 
-
-  list(GC_Curve_Fits %>% 
-                  group_by(BioRep_Index) %>% 
-                  do({
-                    funs = function(x){(GC_Curve_Fits$Intercept + (GC_Curve_Fits$Coef1 * x) + (GC_Curve_Fits$Coef2 * x^2) + 
-                                          (GC_Curve_Fits$Coef3 * x^3) + (GC_Curve_Fits$Coef4 * x^4) + (GC_Curve_Fits$Coef5 * x^5) +
-                                          (GC_Curve_Fits$Coef6 * x^6))}
-                    as.data.frame(curveFunction = funs)
-                  }))
-  
-
-  GC_Curve_Fits[GC_Curve_Fits$BioRep_Index == "rtf1D_YPD_3",]
-  curve(fun1(x), xlim = c(0.5,24))
-  
-  fun2 <- function(x) (makeFun(coeffs$Intercept + (coeffs$Coef1 * x) + (coeffs$Coef2 * x^2) + 
-                                 (coeffs$Coef3 * x^3) + (coeffs$Coef4 * x^4) + (coeffs$Coef5 * x^5) +
-                                 (coeffs$Coef6 * x^6) ~ x))
-  
-  eval(fun2(x), 1:24)
-  ?eval()
-  
-  coeffs <- GC_Curve_Fits[GC_Curve_Fits$BioRep_Index == "rtf1D_YPD_3",]
-  fun1 <- function(x) {(coeffs$Intercept + (coeffs$Coef1 * x) + (coeffs$Coef2 * x^2) + 
-                          (coeffs$Coef3 * x^3) + (coeffs$Coef4 * x^4) + (coeffs$Coef5 * x^5) +
-                          (coeffs$Coef6 * x^6))}
-  
-  fun3 <- expression((coeffs$Intercept) + (coeffs$Coef1 * x) + (coeffs$Coef2 * x^2) + 
-                       (coeffs$Coef3 * x^3) + (coeffs$Coef4 * x^4) + (coeffs$Coef5 * x^5) +
-                       (coeffs$Coef6 * x^6))
-  
-  eval(fun3, 1:24)
-  ?eval
-  class(fun3)
-  D(fun3, 'x')
-  ## Example of fitting 6 coeff polynomial model to GC data
-  {# Select a testdata subset
-    testdata <- GC_Data_Long[GC_Data_Long$BioRep_Index == "rtf1D_YPD_3",]
-    #log2 transform data
-    testdata$OD600 <- log2(testdata$OD600)
-    # plot 
-    plot(testdata$Time,testdata$OD600, col=rgb(0.4,0.4,0.8,0.6), pch=16 , cex=1.3, ylim = c(-3,2), xlim = c(-3,25)) 
-    curve(makeFun(testmodel)(x), add = TRUE)
-    deriv(as.expression(makeFun(testmodel)), "Time", func = TRUE)
-    
-    testmodel <- lm(OD600 ~ Time + I(Time^2) + I(Time^3) + I(Time^4) + I(Time^5) + I(Time^6), data = testdata)
-    plot(makeFun(testmodel), xlim = c(0.5,24), add = T)
-    myPredict <- predict(testmodel)
-    summary(testmodel)$adj.r.squared
-    ix <- sort(testdata$Time, index.return=T)$ix
-    lines(testdata$Time[ix], myPredict[ix], col=2, lwd=2 )  
-    con <- names(coef(testmodel))
-  }
-  }
+DTMatrix_avg <- DTMatrix %>% 
+  group_by(Mutant, Media, Target) %>% 
+  summarise(
+    meanDT = mean(DT),
+    sdDT = sd(DT)
+  )
 
 
+DT_plot <- ggplot(DTMatrix_avg, aes(x=Mutant, y=meanDT, group=Media, fill = Mutant, color = Media)) + 
+  geom_col( width=0.7, position=position_dodge(), alpha = 1) +
+  geom_errorbar(aes(ymin=meanDT-sdDT, ymax=meanDT+sdDT), width=.2,
+                position=position_dodge(.7)) +
+  scale_fill_manual(values = cols) + 
+  geom_point(data = DTMatrix, aes(x=Mutant, y=DT, group=Media, fill = Mutant, color = Media),
+             position=position_dodge(.7) ) +
+  scale_color_manual(values = c("grey50", "grey20"))
+ggsave(width = 25, height = 6, "../res/DT_plot.pdf", DT_plot)
 
-# GC Pipeline Example
-{
-  # Normal GC example for well A1
-  ggplot(GC_Data_Long[GC_Data_Long$BioRep_Index == "001_A1" | GC_Data_Longer$Observation_Index == "001_D1" ,], aes(x=Time, y=OD600, group = `Well`)) +  
-    geom_line(aes(color = `Mutant`), alpha=0.8, size = 2) + theme_bw() + scale_x_continuous(breaks=seq(0,24,1)) + 
-    scale_y_continuous(breaks=seq(0,2.4,.2)) + scale_color_manual(values = cols) +
-    geom_vline(xintercept = c(2,8.486111,11.48))
-  
-  # Log GC example for well A1
-  ggplot(GC_Data_Longer[GC_Data_Longer$Observation_Index == "001_A1" | GC_Data_Longer$Observation_Index == "001_D1" ,], aes(x=Time, y=log2(OD600), group = `Well`)) +  
-    geom_line(aes(color = `Mutant`), alpha=0.8, size = 2) + theme_bw() + scale_x_continuous(breaks=seq(0,24,1)) + scale_color_manual(values = cols) +
-    geom_vline(xintercept = c(2,8.486111,11.48))
-}
+# looking at data in a bio-rep paired manner
+DTDiffMatrix <- cbind(DTMatrix[Media == "YPD",1:2], BioRep = DTMatrix[Media == "YPD",]$BioRep)
+diff <- DTMatrix[Media == "YPD",]$DT - DTMatrix[Media == "YPD_Aux",]$DT
+DTDiffMatrix <- cbind(DTDiffMatrix, diff, YPD_DT = DTMatrix[Media == "YPD",]$DT)
+# DTDiffMatrix$percentdiff <- DTDiffMatrix$diff/DTDiffMatrix
+DTDiffMatrix_avg <- DTDiffMatrix %>% 
+  group_by(Mutant) %>% 
+  summarise(
+    meanDTDiff = mean(diff),
+    sdDT = sd(diff)
+  )
 
-ggplot(GC_Data_Long, aes(x=Time, y=OD600, color = `Target`, group = `BioRep_Index`, shape = `Media`)) +  geom_line(aes(), alpha=0.8, size = 1) + theme_bw() 
-ggplot(GC_Data_Long, aes(x=Time, y=log2(OD600), color = `Target`, group = `BioRep_Index`)) +  geom_line(aes(), alpha=0.8, size = 1) + theme_bw() 
-ggplot(GC_Data_Longer, aes(x=Time, y=OD600, color = `Mutant`, group = `Observation_Index`)) +  geom_line(aes(), alpha=0.8, size = 1) + theme_bw() + scale_colour_manual(values = cols)
+DT_diff_plot <- ggplot(DTDiffMatrix_avg, aes(x=Mutant, y=meanDTDiff, group=Mutant, fill = Mutant, color = Mutant)) + 
+  geom_col( width=.9, position="dodge", alpha = 1, color = "black") +
+  geom_errorbar(aes(ymin=meanDTDiff-sdDT, ymax=meanDTDiff+sdDT), width=.2,
+                position=position_dodge(.7), color = "black") +
+  scale_fill_manual(values = cols) + theme_bw(base_size = 10) +
+  geom_point(data = DTDiffMatrix, aes(x=Mutant, y=diff),
+             position=position_dodge(.7), color = "Black") 
+ggsave(width = 20, height = 6, "../res/DT_diff_plot.pdf", DT_diff_plot)
 
 
+ggplot(DTDiffMatrix, aes(x=Mutant, y=diff, group=Mutant, color = Mutant)) + 
+  geom_point(position=position_dodge(.7) ) +
+  scale_color_manual(values = cols)
 
-# Paf1 GCs
-{
-  # Checking Tech Reps
-  {  
-    ggplot(GC_Data_Longer[GC_Data_Longer$Mutant == as.character("Paf1-AID-osTIR") & GC_Data_Longer$Plate_Num == "3",],
-           aes(x=Time, y=OD600, color = `BioRep_Index`, group = `Observation_Index`)) +  
-      geom_line(aes(linetype = `Media`), alpha=.5, size = 1) + theme_bw() 
-    
-    ggplot(GC_Data_Longer[GC_Data_Longer$Mutant == as.character("Paf1-AID") | 
-                            GC_Data_Longer$Mutant == "WT" & GC_Data_Longer$Plate_Num == "3",],
-           aes(x=Time, y=OD600, color = `Mutant`, group = `Observation_Index`)) +  
-      geom_line(aes(linetype = `Media`), alpha=.5, size = 1) + theme_bw() +
-      scale_colour_manual(values = cols)
-    
-    ggplot(GC_Data_Longer[GC_Data_Longer$Mutant == as.character("paf1D") | 
-                            GC_Data_Longer$Mutant == "WT" & GC_Data_Longer$Plate_Num == "3",],
-           aes(x=Time, y=OD600, color = `Mutant`, group = `Observation_Index`)) +  
-      geom_line(aes(linetype = `Media`), alpha=.5, size = 1) + theme_bw() +
-      scale_colour_manual(values = cols)
-  }
-  
-  # Examining Combined Tech Reps
-  {  
-    ggplot(GC_Data_Long[GC_Data_Long$Mutant == as.character("Paf1-AID-osTIR") | 
-                          GC_Data_Long$Mutant == as.character("WT") & GC_Data_Long$Plate_Num == Plate,],
-           aes(x=Time, y=log2(OD600), color = `Mutant`, group = `BioRep_Index`)) +  
-      geom_line(aes(linetype = `Media`), alpha=.5, size = 1) + theme_bw() +
-      scale_colour_manual(values = cols)
-    
-    ggplot(GC_Data_Long[ GC_Data_Long$Plate_Num == 3 & (GC_Data_Long$Mutant == as.character("Rtf1-AID-osTIR") | 
-                                                          GC_Data_Long$Mutant == as.character("WT")) ,],
-           aes(x=Time, y=OD600, color = `Mutant`, group = `BioRep_Index`)) +  
-      geom_line(aes(linetype = `Media`), alpha=.5, size = 1) + theme_bw() +
-      scale_colour_manual(values = cols)
-    
-    ggplot(GC_Data_Long[ GC_Data_Long$Plate_Num == 3 & (GC_Data_Long$Mutant == as.character("rtf1D") | 
-                                                          GC_Data_Long$Mutant == as.character("WT")) ,],
-           aes(x=Time, y=OD600, color = `Mutant`, group = `BioRep_Index`)) +  
-      geom_line(aes(linetype = `Media`), alpha=.5, size = 1) + theme_bw() +
-      scale_colour_manual(values = cols)
-  }
-  
-  # Group photo
-  {
-    ggplot(GC_Data_Reduced[GC_Data_Reduced$Target == as.character("Paf1") | 
-                             GC_Data_Reduced$Mutant == as.character("WT"),],
-           aes(x=Time, y=OD600, color = `Mutant`, group = `ConditionByPlate`)) +  
-      geom_line(aes(linetype = `Media`), alpha=.5, size = 1) + theme_bw() +
-      scale_colour_manual(values = cols)
-    
-    ggplot(GC_Data_Long[GC_Data_Long$Target == as.character("Paf1") | 
-                          GC_Data_Long$Mutant == as.character("WT"),],
-           aes(x=Time, y=OD600, color = `Mutant`, group = `BioRep_Index`)) +  
-      geom_line(aes(linetype = `Media`), alpha=.5, size = 1) + theme_bw() +
-      scale_colour_manual(values = cols)
-  }
-}
 
-# Rtf1 GCs
-{
-  # Checking Tech Reps
-  {  
-    ggplot(GC_Data_Longer[GC_Data_Longer$Mutant == as.character("Rtf1-AID-osTIR") | 
-                            IncludeWT & Plate,],
-           aes(x=Time, y=OD600, color = `Mutant`, group = `Observation_Index`)) +  
-      geom_line(aes(linetype = `Media`), alpha=.5, size = 1) + theme_bw() +
-      scale_colour_manual(values = cols)
-    
-    ggplot(GC_Data_Longer[GC_Data_Longer$Mutant == as.character("Rtf1-AID") | 
-                            IncludeWT & Plate,],
-           aes(x=Time, y=OD600, color = `Mutant`, group = `Observation_Index`)) +  
-      geom_line(aes(linetype = `Media`), alpha=.5, size = 1) + theme_bw()  +
-      scale_colour_manual(values = cols)
-    
-    ggplot(GC_Data_Longer[GC_Data_Longer$Mutant == as.character("rtf1D") | 
-                            IncludeWT & Plate,],
-           aes(x=Time, y=OD600, color = `Mutant`, group = `Observation_Index`)) +  
-      geom_line(aes(linetype = `Media`), alpha=.5, size = 1) + theme_bw() +
-      scale_colour_manual(values = cols)
-  }
-  
-  # Examining Combined Tech Reps
-  {  
-    ggplot(GC_Data_Long[GC_Data_Long$Mutant == as.character("Rtf1-AID-osTIR") | 
-                          GC_Data_Long$Mutant == as.character("WT") & GC_Data_Long$Plate_Num == Plate,],
-           aes(x=Time, y=OD600, color = `Mutant`, group = `BioRep_Index`)) +  
-      geom_line(aes(linetype = `Media`), alpha=.5, size = 1) + theme_bw() +
-      scale_colour_manual(values = cols)
-    
-    ggplot(GC_Data_Long[GC_Data_Long$Mutant == as.character("Rtf1-AID") | 
-                          GC_Data_Long$Mutant == as.character("WT") & GC_Data_Long$Plate_Num == Plate,],
-           aes(x=Time, y=OD600, color = `Mutant`, group = `BioRep_Index`)) +  
-      geom_line(aes(linetype = `Media`), alpha=.5, size = 1) + theme_bw() +
-      scale_colour_manual(values = cols)
-    
-    ggplot(GC_Data_Long[GC_Data_Long$Mutant == as.character("rtf1D") | 
-                          GC_Data_Long$Mutant == as.character("WT") & GC_Data_Long$Plate_Num == Plate,],
-           aes(x=Time, y=OD600, color = `Mutant`, group = `BioRep_Index`)) +  
-      geom_line(aes(linetype = `Media`), alpha=.5, size = 1) + theme_bw() +
-      scale_colour_manual(values = cols)
-  }
-  
-  # Group photo
-  {
-    ggplot(GC_Data_Reduced[GC_Data_Reduced$Target == as.character("Rtf1") | 
-                             GC_Data_Reduced$Mutant == as.character("WT"),],
-           aes(x=Time, y=log2(OD600), color = `Mutant`, group = `ConditionByPlate`)) +  
-      geom_line(aes(linetype = `Media`), alpha=.5, size = 1) + theme_bw() +
-      scale_colour_manual(values = cols)
-    
-    
-    ggplot(GC_Data_Long[GC_Data_Long$Target == as.character("Rtf1") | 
-                          GC_Data_Long$Mutant == as.character("WT"),],
-           aes(x=Time, y=OD600, color = `Mutant`, group = `BioRep_Index`)) +  
-      geom_line(aes(linetype = `Media`), alpha=.5, size = 1) + theme_bw() +
-      scale_colour_manual(values = cols)
-  }
-}
+ggplot(GC_Data_Long_IP[GC_Data_Long_IP$Mutant == "Rtf1-AID-osTIR",], aes(x=Time, y=log2(OD600), color = `Mutant`, group = `BioRep_Index`)) +  
+  geom_line(aes(linetype = `Media`), alpha=0.8, size = .5 ) + theme_bw(base_size = 8) +
+  scale_colour_manual(values = cols) +  xlim(-14,14) +  ylim(-3,2.5) + facet_wrap(~BioRep, ncol = 3) + geom_vline(xintercept = 0 ) +
+  annotate("rect", xmin = -4, xmax = -1, ymin = -3, ymax = 2.5,
+           alpha = .2)
+GC_Data_Longer_Untrimmed <- merge(GC_Data_Longer_Untrimmed, inflectionPointMatrix[,c(1,4)], by.x = 'BioRep_Index', by.y = 'BioRep_Index')
+GC_Data_Longer_Untrimmed$IP_Time <-  (GC_Data_Longer_Untrimmed$Time - GC_Data_Longer_Untrimmed$inflectionPoint)
 
-# Ctr9 GCs
-{
-  # Checking Tech Reps
-  {  
-    ggplot(GC_Data_Longer[GC_Data_Longer$Mutant == as.character("Ctr9-AID-osTIR") | 
-                            IncludeWT,],
-           aes(x=Time, y=OD600, color = `Mutant`, group = `Observation_Index`)) +  
-      geom_line(aes(linetype = `Media`), alpha=.5, size = 1) + theme_bw() +
-      scale_colour_manual(values = cols)
-    
-    ggplot(GC_Data_Longer[GC_Data_Longer$Mutant == as.character("Ctr9-AID") | 
-                            IncludeWT,],
-           aes(x=Time, y=OD600, color = `Mutant`, group = `Observation_Index`)) +  
-      geom_line(aes(linetype = `Media`), alpha=.5, size = 1) + theme_bw() +
-      scale_colour_manual(values = cols)
-    
-    ggplot(GC_Data_Longer[GC_Data_Longer$Mutant == as.character("ctr9D") | 
-                            IncludeWT,],
-           aes(x=Time, y=OD600, color = `Mutant`, group = `Observation_Index`)) +  
-      geom_line(aes(linetype = `Media`), alpha=.5, size = 1) + theme_bw() +
-      scale_colour_manual(values = cols)
-  }
-  
-  # Examining Combined Tech Reps
-  {  
-    ggplot(GC_Data_Long[GC_Data_Long$Mutant == as.character("Ctr9-AID-osTIR") | 
-                          GC_Data_Long$Mutant == as.character("WT"),],
-           aes(x=Time, y=OD600, color = `Mutant`, group = `BioRep_Index`)) +  
-      geom_line(aes(linetype = `Media`), alpha=.5, size = 1) + theme_bw() +
-      scale_colour_manual(values = cols)
-    
-    ggplot(GC_Data_Long[GC_Data_Long$Mutant == as.character("Ctr9-AID") | 
-                          GC_Data_Long$Mutant == as.character("WT"),],
-           aes(x=Time, y=OD600, color = `Mutant`, group = `BioRep_Index`)) +  
-      geom_line(aes(linetype = `Media`), alpha=.5, size = 1) + theme_bw() +
-      scale_colour_manual(values = cols)
-    
-    ggplot(GC_Data_Long[GC_Data_Long$Mutant == as.character("ctr9D") | 
-                          GC_Data_Long$Mutant == as.character("WT"),],
-           aes(x=Time, y=OD600, color = `Mutant`, group = `BioRep_Index`)) +  
-      geom_line(aes(linetype = `Media`), alpha=.5, size = 1) + theme_bw() +
-      scale_colour_manual(values = cols)
-  }
-  
-  # Group photo
-  {
-    ggplot(GC_Data_Reduced[GC_Data_Reduced$Target == as.character("Ctr9") | 
-                             GC_Data_Reduced$Mutant == as.character("WT"),],
-           aes(x=Time, y=OD600, color = `Mutant`, group = `ConditionByPlate`)) +  
-      geom_line(aes(linetype = `Media`), alpha=.5, size = 1) + theme_bw() +
-      scale_colour_manual(values = cols)
-  }
-}
+ggplot(GC_Data_Longer_Untrimmed[GC_Data_Longer_Untrimmed$Mutant == "Rtf1-AID",], aes(x=Time, y=log2(OD600), color = as.factor(`TechRep`), group = `Observation_Index`)) +  
+  geom_line(aes(linetype = `Media`), alpha=0.5, size = 1 ) + theme_bw(base_size = 8) +
+  scale_colour_manual(values = cols) +
+  xlim(-6,5) +  ylim(-3,2.5) + facet_wrap(~Mutant_BioRep, ncol = 3) + geom_vline(xintercept = 0 ) +
+  annotate("rect", xmin = -4, xmax = -1, ymin = -3, ymax = 2.5,
+           alpha = .2)
+ggplot(GC_Data_Longer_Untrimmed[GC_Data_Longer_Untrimmed$Mutant == "Rtf1-AID",], aes(x=Time, y=log2(OD600), color = as.factor(`TechRep`), group = `Observation_Index`)) +  
+  geom_line(aes(linetype = `Media`), alpha=0.5, size = 1 ) + theme_bw(base_size = 8) +
+  scale_colour_manual(values = cols) +
+  xlim(-6,5) +  ylim(-3,2.5) + facet_wrap(~Mutant_BioRep, ncol = 3) + geom_vline(xintercept = 0 ) +
+  annotate("rect", xmin = -4, xmax = -1, ymin = -3, ymax = 2.5,
+           alpha = .2)
 
-# Cdc73 GCs
-{
-  # Checking Tech Reps
-  {  
-    ggplot(GC_Data_Longer[GC_Data_Longer$Mutant == as.character("Cdc73-AID-osTIR") | 
-                            IncludeWT,],
-           aes(x=Time, y=OD600, color = `Mutant`, group = `Observation_Index`)) +  
-      geom_line(aes(linetype = `Media`), alpha=.5, size = 1) + theme_bw() +
-      scale_colour_manual(values = cols)
-    
-    ggplot(GC_Data_Longer[GC_Data_Longer$Mutant == as.character("Cdc73-AID") | 
-                            IncludeWT,],
-           aes(x=Time, y=OD600, color = `Mutant`, group = `Observation_Index`)) +  
-      geom_line(aes(linetype = `Media`), alpha=.5, size = 1) + theme_bw() +
-      scale_colour_manual(values = cols)
-    
-    ggplot(GC_Data_Longer[GC_Data_Longer$Mutant == as.character("cdc73D") | 
-                            IncludeWT,],
-           aes(x=Time, y=OD600, color = `Mutant`, group = `Observation_Index`)) +  
-      geom_line(aes(linetype = `Media`), alpha=.5, size = 1) + theme_bw() +
-      scale_colour_manual(values = cols)
-  }
-  
-  # Examining Combined Tech Reps
-  {  
-    ggplot(GC_Data_Long[GC_Data_Long$Mutant == as.character("Cdc73-AID-osTIR") | 
-                          GC_Data_Long$Mutant == as.character("WT"),],
-           aes(x=Time, y=OD600, color = `Mutant`, group = `BioRep_Index`)) +  
-      geom_line(aes(linetype = `Media`), alpha=.5, size = 1) + theme_bw() +
-      scale_colour_manual(values = cols)
-    
-    ggplot(GC_Data_Long[GC_Data_Long$Mutant == as.character("Cdc73-AID") | 
-                          GC_Data_Long$Mutant == as.character("WT"),],
-           aes(x=Time, y=OD600, color = `Mutant`, group = `BioRep_Index`)) +  
-      geom_line(aes(linetype = `Media`), alpha=.5, size = 1) + theme_bw() +
-      scale_colour_manual(values = cols)
-    
-    ggplot(GC_Data_Long[GC_Data_Long$Mutant == as.character("cdc73D") | 
-                          GC_Data_Long$Mutant == as.character("WT"),],
-           aes(x=Time, y=OD600, color = `Mutant`, group = `BioRep_Index`)) +  
-      geom_line(aes(linetype = `Media`), alpha=.5, size = 1) + theme_bw() +
-      scale_colour_manual(values = cols)
-  }
-  
-  # Group photo
-  {
-    ggplot(GC_Data_Reduced[GC_Data_Reduced$Target == as.character("Cdc73") | 
-                             GC_Data_Reduced$Mutant == as.character("WT"),],
-           aes(x=Time, y=OD600, color = `Mutant`, group = `ConditionByPlate`)) +  
-      geom_line(aes(linetype = `Media`), alpha=.9, size = 1) + theme_bw() +
-      scale_colour_manual(values = cols)
-  }
-}
+ggplot(GC_Data_Longer[GC_Data_Longer$Mutant == c("ctr9D", "htz1D_Rtf1-AID-osTIR") ,], aes(x=Time, y=OD600, color = Mutant, group = `Observation_Index`)) +
+  geom_line(aes(linetype = `Media`), alpha=0.8, size = .5) + theme_bw(base_size = 8) +
+  ggtitle(paste0("Data from Plate ", 4)) +
+  xlim(0,25) +  ylim(0,2.5) +  scale_colour_manual(values = cols)
+
+Plate4_plot
