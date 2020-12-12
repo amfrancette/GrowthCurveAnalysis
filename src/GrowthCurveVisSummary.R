@@ -53,7 +53,7 @@ GC_Data_6 <- read.csv("DataTables/RthLeGCData_006.csv", header = T, sep = ",")
 # leaving just the index. This index is used to perform a few operations on the data frames
 # including making an observation index that appends plate and well ids, making a condition
 # variable that combines mutant and media parameters, and making a bioRep index to be able to average 
-# technical replicates
+# technical replicates. 
 
 for (i in str_remove(ls(pattern="GC_Data_Key_", all.names = TRUE), "GC_Data_Key_")) {
   print(paste("Plate ", i))
@@ -285,10 +285,10 @@ DT_plot <- ggplot(DTMatrix_avg, aes(x=Mutant, y=meanDT, group=Media, fill = Muta
              position=position_dodge(.7) ) +
   scale_color_manual(values = c("grey50", "grey20", "grey10"))
 ggsave(width = 25, height = 6, "../res/DT_plot.pdf", DT_plot)
-
 # looking at data in a bio-rep paired manner
-DTDiffMatrix <- cbind(DTMatrix[Media == "YPD",1:2], BioRep = DTMatrix[Media == "YPD",]$BioRep)
-diff <- DTMatrix[Media == "YPD",]$DT - DTMatrix[Media == "YPD_Aux",]$DT
+DTDiffMatrix <- cbind(DTMatrix[(Media == "YPD" | Media == "YPD_Veh"),1:3], 
+                      p)
+diff <- DTMatrix[(Media == "YPD" | Media == "YPD_Veh"),]$DT - DTMatrix[Media == "YPD_Aux",]$DT
 DTDiffMatrix <- cbind(DTDiffMatrix, diff, YPD_DT = DTMatrix[Media == "YPD",]$DT)
 # DTDiffMatrix$percentdiff <- DTDiffMatrix$diff/DTDiffMatrix
 DTDiffMatrix_avg <- DTDiffMatrix %>% 
