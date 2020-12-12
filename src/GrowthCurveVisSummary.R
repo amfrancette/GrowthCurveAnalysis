@@ -8,7 +8,7 @@ library(mosaic)
 library(stringr)
 library(RColorBrewer)
 
-# setwd("E:/GitHub/GrowthCurveAnalysis/GC_Data/")
+setwd("E:/GitHub/GrowthCurveAnalysis/GC_Data/")
 # Set colorscheme
 {
   
@@ -32,61 +32,62 @@ library(RColorBrewer)
 # make note of any wells that were dropped from the original Data 
 
 {
-GC_Data_Key_001 <- read.csv("DataKeys/CtCdGCDataKey_001.csv", header = T, sep = ",")
-GC_Data_Key_001$Observation_Index <- paste(GC_Data_Key_001$Plate_Num, "_", GC_Data_Key_001$Well, sep = '')
-GC_Data_Key_001$Condition <-  paste(GC_Data_Key_001$Mutant, "_", GC_Data_Key_001$Media, sep = '')
-GC_Data_Key_001$BioRep_Index <-  paste(GC_Data_Key_001$Condition, "_", GC_Data_Key_001$BioRep, sep = '')
-GC_Data_001 <- read.csv("DataTables/CtCdGCData_001.csv", header = T, sep = ",")
-GC_Data_001 <- pivot_longer(GC_Data_001, -Time, names_to = "Well", values_to = "OD600" )
-GC_Data_001_Longer <- merge(GC_Data_001, GC_Data_Key_001, by.x = 'Well', by.y = 'Well')
+# Read in data key csv files here. 
+GC_Data_Key_1 <- read.csv("DataKeys/CtCdGCDataKey_001.csv", header = T, sep = ",")
+GC_Data_Key_2 <- read.csv("DataKeys/PaRtGCDataKey_002.csv", header = T, sep = ",")
+GC_Data_Key_3 <- read.csv("DataKeys/PaRtGCDataKey_003.csv", header = T, sep = ",")
+GC_Data_Key_4 <- read.csv("DataKeys/CtLeGCDataKey_004.csv", header = T, sep = ",")
+GC_Data_Key_5 <- read.csv("DataKeys/RtRthGCDataKey_005.csv", header = T, sep = ",")
+GC_Data_Key_6 <- read.csv("DataKeys/RthLeGCDataKey_006.csv", header = T, sep = ",")
 
-GC_Data_Key_002 <- read.csv("DataKeys/PaRtGCDataKey_002.csv", header = T, sep = ",")
-GC_Data_Key_002$Observation_Index <- paste(GC_Data_Key_002$Plate_Num, "_", GC_Data_Key_002$Well, sep = '')
-GC_Data_Key_002$Condition <-  paste(GC_Data_Key_002$Mutant, "_", GC_Data_Key_002$Media, sep = '')
-GC_Data_Key_002$BioRep_Index <-  paste(GC_Data_Key_002$Condition, "_", GC_Data_Key_002$BioRep, sep = '')
-GC_Data_002 <- read.csv("DataTables/PaRtGCData_002.csv", header = T, sep = ",")
-GC_Data_002 <- pivot_longer(GC_Data_002, -Time, names_to = "Well", values_to = "OD600" )
-GC_Data_002_Longer <-merge(GC_Data_002, GC_Data_Key_002, by.x = 'Well', by.y = 'Well')
-# Note Wells G1 and G6 were dropped from original data as they never reached saturation. Clearly a technical issue. 
+# Read in data csv files here.
+GC_Data_1 <- read.csv("DataTables/CtCdGCData_001.csv", header = T, sep = ",")
+GC_Data_2 <- read.csv("DataTables/PaRtGCData_002.csv", header = T, sep = ",")
+  # Note Wells G1 and G6 were dropped from original data of Plate 2 as they never reached saturation. Clearly a technical issue. 
+GC_Data_3 <- read.csv("DataTables/PaRtGCData_003.csv", header = T, sep = ",")
+GC_Data_4 <- read.csv("DataTables/CtLeGCData_004.csv", header = T, sep = ",")
+GC_Data_5 <- read.csv("DataTables/RtRthGCData_005.csv", header = T, sep = ",")
+GC_Data_6 <- read.csv("DataTables/RthLeGCData_006.csv", header = T, sep = ",")
 
-GC_Data_Key_003 <- read.csv("DataKeys/PaRtGCDataKey_003.csv", header = T, sep = ",")
-GC_Data_Key_003$Observation_Index <- paste(GC_Data_Key_003$Plate_Num, "_", GC_Data_Key_003$Well, sep = '')
-GC_Data_Key_003$Condition <-  paste(GC_Data_Key_003$Mutant, "_", GC_Data_Key_003$Media, sep = '')
-GC_Data_Key_003$BioRep_Index <-  paste(GC_Data_Key_003$Condition, "_", GC_Data_Key_003$BioRep, sep = '')
-GC_Data_003 <- read.csv("DataTables/PaRtGCData_003.csv", header = T, sep = ",")
-GC_Data_003 <- pivot_longer(GC_Data_003, -Time, names_to = "Well", values_to = "OD600" )
-GC_Data_003_Longer <-merge(GC_Data_003, GC_Data_Key_003, by.x = 'Well', by.y = 'Well')
+# this for loop finds the objects matching the pattern "GC_Data_*" and trims them 
+# leaving just the index. This index is used to perform a few operations on the data frames
+# including making an observation index that appends plate and well ids, making a condition
+# variable that combines mutant and media parameters, and making a bioRep index to be able to average 
+# technical replicates
 
-GC_Data_Key_004 <- read.csv("DataKeys/CtLeGCDataKey_004.csv", header = T, sep = ",")
-GC_Data_Key_004$Observation_Index <- paste(GC_Data_Key_004$Plate_Num, "_", GC_Data_Key_004$Well, sep = '')
-GC_Data_Key_004$Condition <-  paste(GC_Data_Key_004$Mutant, "_", GC_Data_Key_004$Media, sep = '')
-GC_Data_Key_004$BioRep_Index <-  paste(GC_Data_Key_004$Condition, "_", GC_Data_Key_004$BioRep, sep = '')
-GC_Data_004 <- read.csv("DataTables/CtLeGCData_004.csv", header = T, sep = ",")
-GC_Data_004 <- pivot_longer(GC_Data_004, -Time, names_to = "Well", values_to = "OD600" )
-GC_Data_004_Longer <-merge(GC_Data_004, GC_Data_Key_004, by.x = 'Well', by.y = 'Well')
-
-GC_Data_Key_005 <- read.csv("DataKeys/RtRthGCDataKey_005.csv", header = T, sep = ",")
-GC_Data_Key_005$Observation_Index <- paste(GC_Data_Key_005$Plate_Num, "_", GC_Data_Key_005$Well, sep = '')
-GC_Data_Key_005$Condition <-  paste(GC_Data_Key_005$Mutant, "_", GC_Data_Key_005$Media, sep = '')
-GC_Data_Key_005$BioRep_Index <-  paste(GC_Data_Key_005$Condition, "_", GC_Data_Key_005$BioRep, sep = '')
-GC_Data_005 <- read.csv("DataTables/RtRthGCData_005.csv", header = T, sep = ",")
-GC_Data_005 <- pivot_longer(GC_Data_005, -Time, names_to = "Well", values_to = "OD600" )
-GC_Data_005_Longer <-merge(GC_Data_005, GC_Data_Key_005, by.x = 'Well', by.y = 'Well')
-
-GC_Data_Key_006 <- read.csv("DataKeys/RthLeGCDataKey_006.csv", header = T, sep = ",")
-GC_Data_Key_006$Observation_Index <- paste(GC_Data_Key_006$Plate_Num, "_", GC_Data_Key_006$Well, sep = '')
-GC_Data_Key_006$Condition <-  paste(GC_Data_Key_006$Mutant, "_", GC_Data_Key_006$Media, sep = '')
-GC_Data_Key_006$BioRep_Index <-  paste(GC_Data_Key_006$Condition, "_", GC_Data_Key_006$BioRep, sep = '')
-GC_Data_006 <- read.csv("DataTables/RthLeGCData_006.csv", header = T, sep = ",")
-GC_Data_006 <- pivot_longer(GC_Data_006, -Time, names_to = "Well", values_to = "OD600" )
-GC_Data_006_Longer <-merge(GC_Data_006, GC_Data_Key_006, by.x = 'Well', by.y = 'Well')
-
+for (i in str_remove(ls(pattern="GC_Data_Key_", all.names = TRUE), "GC_Data_Key_")) {
+  print(paste("Plate ", i))
+  # the get(eval()) piece allows me to interpret a string as a variable, I use this
+  # to refer to variables with varying plate indices
+  tempDataKey <- get(eval(paste0("GC_Data_Key_", i)))
+  tempDataTable <- get(eval(paste0("GC_Data_", i)))
+  tempDataKey$Observation_Index <- paste(tempDataKey$Plate_Num, "_", tempDataKey$Well, sep = '')
+  tempDataKey$Condition <- paste(tempDataKey$Mutant, "_", tempDataKey$Media, sep = '')
+  tempDataKey$BioRep_Index <-  paste(tempDataKey$Condition, "_", tempDataKey$BioRep, sep = '')
+  # longifies data table to provide a "Well" column for merging with datakeys
+  tempDataTable <- pivot_longer(tempDataTable,
+                 -Time,
+                 names_to = "Well",
+                 values_to = "OD600")
+  tempDataTable_Longer <-  merge(tempDataTable,
+                                 tempDataKey,
+          by.x = 'Well',
+          by.y = 'Well')
+  
+  # this if else statement lets me MAKE the variable GC_Data_Longer if it doesn't
+  # already exist. If it does, then I append the curent temptable to the growing 
+  # combined data frame
+  if (exists("GC_Data_Longer")) {
+    print(dim(GC_Data_Longer))
+    GC_Data_Longer <- rbind(GC_Data_Longer, tempDataTable_Longer)
+    print(dim(GC_Data_Longer))
+  }  else {
+    GC_Data_Longer <- tempDataTable_Longer
+    print(dim(GC_Data_Longer))
+  }
 }
 
-# appends data from tables together
-GC_Data_Longer <- rbind(GC_Data_001_Longer, GC_Data_002_Longer, 
-                        GC_Data_003_Longer, GC_Data_004_Longer, 
-                        GC_Data_005_Longer, GC_Data_006_Longer)
+}
 
 # Ties the genetic mutant to the biorep to keep track of which pairwise conditions came from the same colony/culture
 GC_Data_Longer$Mutant_BioRep <- paste0(GC_Data_Longer$Mutant, "_" ,GC_Data_Longer$BioRep)
@@ -105,27 +106,13 @@ GC_Data_Longer$Mutant_BioRep <- paste0(GC_Data_Longer$Mutant, "_" ,GC_Data_Longe
   GC_Data_Reduced$sdByBioRep[is.na(GC_Data_Reduced$sdByBioRep)] <- 0
 }
 attach(GC_Data_Long)
-GC_Data_Long[Plate_Num == "6",]
+
 # Keeps an untrimmed version for posterity
 GC_Data_Longer_Untrimmed <- GC_Data_Longer
 # removes Rtf1-AID BioRep2 bc of wierdness
 GC_Data_Longer <- GC_Data_Longer[GC_Data_Longer$Mutant_BioRep != "Rtf1-AID_2",]
 
 
-# Plate check chunk
-{
-  # sets plate ID to examine if you are into that kind of thing
-  Plate <- 6
-  ggplot(GC_Data_Longer[GC_Data_Longer$Plate_Num == Plate & GC_Data_Longer$Target != "Blank",], aes(x=Time, y=OD600, color = `Mutant`, group = `Observation_Index`)) +  
-    geom_line(aes(linetype = `Media`), alpha=0.8, size = 1 ) + theme_bw(base_size = 15) +
-    ggtitle(paste0("Data from Plate ", Plate)) +
-    scale_colour_manual(values = cols) +  xlim(0,25) +  ylim(0,2.5) + facet_wrap(~Mutant, ncol = 3)
-  
-  ggplot(GC_Data_Long[GC_Data_Long$Plate_Num == Plate,], aes(x=Time, y=OD600, color = `Mutant`, group = `BioRep_Index`)) +  
-    geom_line(aes(linetype = `Media`), alpha=0.8, size = 1 ) + theme_bw(base_size = 15) +
-    ggtitle(paste0("Data from Plate ", Plate)) +
-    scale_colour_manual(values = cols) +  xlim(0,25) +  ylim(0,2.5) + facet_wrap(~Mutant, ncol = 3)
-}
 
 {
   ggplot(GC_Data_Longer[GC_Data_Longer$Target != "Blank",], aes(x=Time, y=OD600, color = `Mutant`, group = `Observation_Index`)) +  
@@ -352,4 +339,3 @@ ggplot(GC_Data_Longer[GC_Data_Longer$Mutant == c("ctr9D", "htz1D_Rtf1-AID-osTIR"
   ggtitle(paste0("Data from Plate ", 4)) +
   xlim(0,25) +  ylim(0,2.5) +  scale_colour_manual(values = cols)
 
-Plate4_plot
