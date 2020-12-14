@@ -8,7 +8,8 @@ library(mosaic)
 library(stringr)
 library(RColorBrewer)
 
-setwd("E:/GitHub/GrowthCurveAnalysis/GC_Data/")
+# setwd("E:/GitHub/GrowthCurveAnalysis/GC_Data/")
+setwd("~/Documents/GitHub/GrowthCurveAnalysis/GC_Data/")
 # Set colorscheme
 {
   
@@ -21,7 +22,7 @@ setwd("E:/GitHub/GrowthCurveAnalysis/GC_Data/")
             "Cdc73-AID" = "#549EFC","Cdc73-AID-osTIR" = "#4586D9",  "cdc73D" = "#3D6394",
             "Leo1-AID" = "#EE46E9","Leo1-AID-osTIR" = "#CE3ECA",  "leo1D" = "#8E2A8B",
             "1" = "black", "2" = "red", "3" = "blue", "4" = "green" )  
-
+  media <- c("YPD" = 1, "YPD_Aux" = 2, "YPD_Veh" = 3)
 }
 
 # Load Data and Data Keys
@@ -39,6 +40,7 @@ GC_Data_Key_3 <- read.csv("DataKeys/PaRtGCDataKey_003.csv", header = T, sep = ",
 GC_Data_Key_4 <- read.csv("DataKeys/CtLeGCDataKey_004.csv", header = T, sep = ",")
 GC_Data_Key_5 <- read.csv("DataKeys/RtRthGCDataKey_005.csv", header = T, sep = ",")
 GC_Data_Key_6 <- read.csv("DataKeys/RthLeGCDataKey_006.csv", header = T, sep = ",")
+GC_Data_Key_7 <- read.csv("DataKeys/CtCdGCDataKey_007.csv", header = T, sep = ",")
 
 # Read in data csv files here.
 GC_Data_1 <- read.csv("DataTables/CtCdGCData_001.csv", header = T, sep = ",")
@@ -48,6 +50,7 @@ GC_Data_3 <- read.csv("DataTables/PaRtGCData_003.csv", header = T, sep = ",")
 GC_Data_4 <- read.csv("DataTables/CtLeGCData_004.csv", header = T, sep = ",")
 GC_Data_5 <- read.csv("DataTables/RtRthGCData_005.csv", header = T, sep = ",")
 GC_Data_6 <- read.csv("DataTables/RthLeGCData_006.csv", header = T, sep = ",")
+GC_Data_7 <- read.csv("DataTables/CtCdGCData_007.csv", header = T, sep = ",")
 
 # this for loop finds the objects matching the pattern "GC_Data_*" and trims them 
 # leaving just the index. This index is used to perform a few operations on the data frames
@@ -55,6 +58,7 @@ GC_Data_6 <- read.csv("DataTables/RthLeGCData_006.csv", header = T, sep = ",")
 # variable that combines mutant and media parameters, and making a bioRep index to be able to average 
 # technical replicates. 
 
+rm(GC_Data_Longer)
 for (i in str_remove(ls(pattern="GC_Data_Key_", all.names = TRUE), "GC_Data_Key_")) {
   print(paste("Plate ", i))
   # the get(eval()) piece allows me to interpret a string as a variable, I use this
@@ -111,7 +115,7 @@ attach(GC_Data_Long)
 GC_Data_Longer_Untrimmed <- GC_Data_Longer
 # removes Rtf1-AID BioRep2 bc of wierdness
 GC_Data_Longer <- GC_Data_Longer[GC_Data_Longer$Mutant_BioRep != "Rtf1-AID_2",]
-
+GC_Data_Longer <- GC_Data_Longer[GC_Data_Longer$Mutant_BioRep != "Leo1-AID-osTIR_3",]
 
 
 {
@@ -224,7 +228,7 @@ GC_Data_Longer <- GC_Data_Longer[GC_Data_Longer$Mutant_BioRep != "Rtf1-AID_2",]
     Plot_path <-  paste("../res/DataByPlate/PlatePlot_", i, ".pdf", sep = "")
     print(Plot_path)
     tempPlot <-  ggplot(GC_Data_Longer[GC_Data_Longer$Plate_Num == as.character(i) ,], aes(x=Time, y=OD600, color = as.factor(`BioRep`), group = `Observation_Index`)) +
-      geom_line(aes(linetype = `Media`), alpha=0.8, size = 1) + theme_bw(base_size = 12) +
+      geom_line(aes(linetype = `Media`), alpha=0.8, size = 1) + theme_bw(base_size = 16) +
       ggtitle(paste0("Data from Plate ", i)) +
       xlim(0,25) +  ylim(0,2.5) + facet_wrap(~Mutant)
     ggsave(width = 10, height = 8, Plot_path, tempPlot)
@@ -235,7 +239,7 @@ GC_Data_Longer <- GC_Data_Longer[GC_Data_Longer$Mutant_BioRep != "Rtf1-AID_2",]
     Plot_path <-  paste("../res/DataByTargetGene/TargetPlot_", i, ".pdf", sep = "")
     print(Plot_path)
     tempPlot <- ggplot(GC_Data_Long[GC_Data_Long$Target == i,], aes(x=Time, y=OD600, color = Mutant, group = `BioRep_Index`)) +
-      geom_line(aes(linetype = `Media`), alpha=0.8, size = 1) + theme_bw(base_size = 8) +
+      geom_line(aes(linetype = `Media`), alpha=0.8, size = 1) + theme_bw(base_size = 16) +
       ggtitle(paste0(i, "Data")) + scale_color_manual(values = cols) +
       xlim(0,25) +  ylim(0,2.5) + facet_wrap(~Mutant)
     ggsave(width =20, height = 5, Plot_path, tempPlot)
