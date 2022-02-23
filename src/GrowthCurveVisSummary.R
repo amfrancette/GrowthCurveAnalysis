@@ -1,8 +1,8 @@
 library(tidyverse)
 library(ggplot2)
-library(stringr)
 library(lubridate) 
 library(inflection) 
+library(ggpattern)
 
 
 setwd("~/Documents/GitHub/GrowthCurveAnalysis/GC_Data/")
@@ -20,7 +20,16 @@ setwd("~/Documents/GitHub/GrowthCurveAnalysis/GC_Data/")
             "Leo1-AID" = "#EE46E9","Leo1-AID-osTIR" = "#CE3ECA",  "leo1D" = "#8E2A8B",
             "1" = "black", "2" = "red", "3" = "blue", "4" = "green" )  
   media <- c("YPD" = 1, "YPD_Aux" = 2, "YPD_Veh" = 3)
+  sampleOrder <- c("Wt", "Paf1", "Ctr9", "Rtf1", 
+                      "Cdc73", "Leo1", 
+                   "WT", "Paf1-AID", "Paf1-AID-osTIR", "paf1D",
+                   "Ctr9-AID", "Ctr9-AID-osTIR",  "ctr9D" ,
+                   "Rtf1-AID", "Rtf1-AID-osTIR",  "rtf1D" ,
+                   "Cdc73-AID","Cdc73-AID-osTIR",  "cdc73D" ,
+                   "Leo1-AID","Leo1-AID-osTIR",  "leo1D" ,
+                   "htz1D_Rtf1-AID", "htz1D_Rtf1-AID-osTIR" ,  "htz1D", "Blank")
 }
+
 
 # Load Data and Data Keys
 # Data keys have a field that connects to the well number of the plate, 
@@ -55,6 +64,7 @@ GC_Data_7 <- read.csv("DataTables/CtCdGCData_007.csv", header = T, sep = ",")
 # variable that combines mutant and media parameters, and making a bioRep index to be able to average 
 # technical replicates. 
 
+# this just cleans out the combined data frame of all plates if you wish to re-run the script in the same directory
 rm(GC_Data_Longer)
 for (i in str_remove(ls(pattern="GC_Data_Key_", all.names = TRUE), "GC_Data_Key_")) {
   print(paste("Plate ", i))
@@ -65,7 +75,7 @@ for (i in str_remove(ls(pattern="GC_Data_Key_", all.names = TRUE), "GC_Data_Key_
   tempDataKey$Observation_Index <- paste(tempDataKey$Plate_Num, "_", tempDataKey$Well, sep = '')
   tempDataKey$Condition <- paste(tempDataKey$Mutant, "_", tempDataKey$Media, sep = '')
   tempDataKey$BioRep_Index <-  paste(tempDataKey$Condition, "_", tempDataKey$BioRep, sep = '')
-  # longifies data table to provide a "Well" column for merging with datakeys
+  # "longifies" data table to provide a "Well" column for merging with datakeys
   tempDataTable <- pivot_longer(tempDataTable,
                  -Time,
                  names_to = "Well",
@@ -90,6 +100,10 @@ for (i in str_remove(ls(pattern="GC_Data_Key_", all.names = TRUE), "GC_Data_Key_
 
 }
 
+# removes htz1 samples from dataset
+GC_Data_Longer <- GC_Data_Longer[!grepl("htz1",GC_Data_Longer$Target),]
+GC_Data_Longer <- GC_Data_Longer[!grepl("YPD_Veh",GC_Data_Longer$Media),]
+
 # Ties the genetic mutant to the biorep to keep track of which pairwise conditions came from the same colony/culture
 GC_Data_Longer$Mutant_BioRep <- paste0(GC_Data_Longer$Mutant, "_" ,GC_Data_Longer$BioRep)
 
@@ -106,6 +120,7 @@ GC_Data_Longer$Mutant_BioRep <- paste0(GC_Data_Longer$Mutant, "_" ,GC_Data_Longe
   GC_Data_Reduced$ConditionByPlate <- paste(GC_Data_Reduced$Condition, GC_Data_Reduced$Plate_Num)
   GC_Data_Reduced$sdByBioRep[is.na(GC_Data_Reduced$sdByBioRep)] <- 0
 }
+
 attach(GC_Data_Long)
 
 # Keeps an untrimmed version for posterity
@@ -113,7 +128,6 @@ GC_Data_Longer_Untrimmed <- GC_Data_Longer
 # removes Rtf1-AID BioRep2 bc of wierdness
 GC_Data_Longer <- GC_Data_Longer[GC_Data_Longer$Mutant_BioRep != "Rtf1-AID_2",]
 GC_Data_Longer <- GC_Data_Longer[GC_Data_Longer$Mutant_BioRep != "Leo1-AID-osTIR_3",]
-
 
 {
   ggplot(GC_Data_Longer[GC_Data_Longer$Target != "Blank",], aes(x=Time, y=OD600, color = `Mutant`, group = `Observation_Index`)) +  
@@ -151,6 +165,7 @@ GC_Data_Longer <- GC_Data_Longer[GC_Data_Longer$Mutant_BioRep != "Leo1-AID-osTIR
   
   # prints out if there are some datasets without an Inflection point
   NoIPDatasets
+  
   # plots IP-less curves for visual inspection
   ggplot(GC_Data_Long[GC_Data_Long$BioRep_Index == NoIPDatasets$BioRep_Index,], aes(x=Time, y=OD600, color = `Mutant`, group = `BioRep_Index`)) +  
     geom_line(aes(linetype = `Media`), alpha=0.8, size = 1 ) + theme_bw(base_size = 15) +
@@ -200,13 +215,13 @@ GC_Data_Longer <- GC_Data_Longer[GC_Data_Longer$Mutant_BioRep != "Leo1-AID-osTIR
   
   allData_Reduced_plot <-  ggplot(GC_Data_Reduced[GC_Data_Reduced$Target != "Blank",], aes(x=Time, y=OD600, color = `Mutant`, group = ConditionByPlate)) +  
     geom_line(aes(linetype = `Media`), alpha=0.8, size = 1 ) + 
-    theme_bw(base_size = 15) + 
+    theme_bw(base_size = 15) + theme(legend.position  = "none") +
     geom_ribbon(aes(ymin=(OD600 - sdByBioRep),
                     ymax=(OD600 + sdByBioRep), 
                     alpha = .05), linetype="F1", 
                 alpha=0.2, size = .3) +
-    scale_colour_manual(values = cols) + scale_fill_manual(values = cols)+  xlim(0,25) +  ylim(0,2.5) + facet_wrap(~Mutant, ncol = 3)
-  ggsave(width = 10, height = 20, "../res/allData_Reduced_plot.pdf", allData_Reduced_plot)
+    scale_colour_manual(values = cols) + scale_fill_manual(values = cols)+  xlim(0,25) +  ylim(0,2.5) + facet_wrap(~Mutant, ncol = 6)
+  ggsave(width = 10, height = 5, "../res/allData_Reduced_plot.pdf", allData_Reduced_plot)
   
   # cut traces from untransformed data
   cutTrace_plot <- ggplot(Data_subset, aes(x=Time, y=OD600, color = `Mutant`, group = `BioRep_Index`)) +  
@@ -264,33 +279,37 @@ DTMatrix$BioRep <- str_sub(DTMatrix$BioRep_Index, -1)
 DTMatrix$DT <- as.numeric(DTMatrix$DT)
 
 DTMatrix <- DTMatrix[order(DTMatrix$BioRep_Index),]
+DTMatrix$Target <- factor(DTMatrix$Target,
+                          levels = sampleOrder)
+DTMatrix$Mutant <- factor(DTMatrix$Mutant,
+                          levels = sampleOrder)
 attach(DTMatrix)
 
 DTMatrix
-
 DTMatrix_avg <- DTMatrix %>% 
   group_by(Mutant, Media, Target) %>% 
-  summarise(
-    meanDT = mean(DT),
-    sdDT = sd(DT)
-  )
-
-
-DT_plot <- ggplot(DTMatrix_avg, aes(x=Mutant, y=meanDT, group=Media, fill = Mutant, color = Media)) + 
+  summarise(meanDT = mean(DT), sdDT = sd(DT) )
+DT_plot <- ggplot(DTMatrix_avg[DTMatrix_avg$Mutant != "htz1D_Rtf1-AID-osTIR",], aes(x=Mutant, y=meanDT, group=Media, fill = Mutant, color = Media)) + 
   geom_col( width=0.7, position=position_dodge(), alpha = 1) +
   geom_errorbar(aes(ymin=meanDT-sdDT, ymax=meanDT+sdDT), width=.2,
                 position=position_dodge(.7)) +
   scale_fill_manual(values = cols) + 
-  geom_point(data = DTMatrix, aes(x=Mutant, y=DT, group=Media, fill = Mutant, color = Media),
-             position=position_dodge(.7) ) +
-  scale_color_manual(values = c("grey50", "grey20", "grey10"))
+  geom_point(data = DTMatrix[DTMatrix$Mutant != "htz1D_Rtf1-AID-osTIR",], aes(x=Mutant, y=DT, group=Media, fill = Mutant, color = Media, shape = as.factor(Media)),
+             position=position_dodge(.7) ) + theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  scale_color_manual(values = c("grey10","grey10","grey10")) + theme(legend.position = "none")
 DT_plot
-ggsave(width = 25, height = 6, "../res/DT_plot.pdf", DT_plot)
+ggsave(width = 10, height = 6, "../res/DT_plot.pdf", DT_plot)
 # looking at data in a bio-rep paired manner
-DTDiffMatrix <- cbind(DTMatrix[(Media == "YPD" | Media == "YPD_Veh"),1:3], 
-                      p)
-diff <- DTMatrix[(Media == "YPD" | Media == "YPD_Veh"),]$DT - DTMatrix[Media == "YPD_Aux",]$DT
+attach(DTMatrix)
+
+
+
+#### BELOW THIS POINT IS FOR TESTING #####
+
+
+diff <- DTMatrix[(Media == "YPD"),]$DT - DTMatrix[Media == "YPD_Aux",]$DT
 DTDiffMatrix <- cbind(DTDiffMatrix, diff, YPD_DT = DTMatrix[Media == "YPD",]$DT)
+
 # DTDiffMatrix$percentdiff <- DTDiffMatrix$diff/DTDiffMatrix
 DTDiffMatrix_avg <- DTDiffMatrix %>% 
   group_by(Mutant) %>% 
@@ -340,4 +359,28 @@ ggplot(GC_Data_Longer[GC_Data_Longer$Mutant == c("ctr9D", "htz1D_Rtf1-AID-osTIR"
   geom_line(aes(linetype = `Media`), alpha=0.8, size = .5) + theme_bw(base_size = 8) +
   ggtitle(paste0("Data from Plate ", 4)) +
   xlim(0,25) +  ylim(0,2.5) +  scale_colour_manual(values = cols)
+
+
+DTMatrix_avg2 <- DTMatrix_avg[DTMatrix_avg$Media != "YPD_Veh",]
+DTMatrix2 <- DTMatrix[DTMatrix$Media != "YPD_Veh",]
+
+?linetype
+ltype <- c("YPD" = 1, "YPD_Aux" = 14)
+
+
+DT_plot <- ggplot(DTMatrix_avg2, aes(x=Mutant, y=meanDT, group=Media, fill = Mutant, color = Media, linetype = Media)) + 
+  geom_col( width=0.7, position=position_dodge(), alpha = 1) +
+  geom_errorbar(aes(ymin=meanDT-sdDT, ymax=meanDT+sdDT), width=.2,
+                position=position_dodge(.7)) +
+  scale_fill_manual(values = cols) + 
+  geom_point(data = DTMatrix2, aes(x=Mutant, y=DT, group=Media, fill = Mutant, color = Media, shape = as.factor(Media)),
+             position=position_dodge(.7) ) +
+  scale_linetype_manual(values = ltype) +
+  scale_color_manual(values = c("grey10","grey10","grey10")) + scale_y_continuous(breaks=seq(0,6,0.5)) + 
+  geom_hline(yintercept = as.numeric(DTMatrix_avg[DTMatrix_avg$Mutant == "WT" & DTMatrix_avg$Media == "YPD", 4])) 
+DT_plot
+
+ggsave(width = 20, height = 6, "../res/DT_plotNoVeh.pdf", DT_plot)
+?geom_col
+?scale_linetype_manual()
 
