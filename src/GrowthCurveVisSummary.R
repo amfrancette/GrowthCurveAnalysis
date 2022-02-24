@@ -1,9 +1,14 @@
+BiocManager::install("tidyverse")
+BiocManager::install("ggplot2")
+BiocManager::install("lubridate")
+BiocManager::install("inflection")
+
+
 library(tidyverse)
 library(ggplot2)
 library(lubridate) 
 library(inflection) 
-library(ggpattern)
-
+# library(ggpattern)
 
 setwd("~/Documents/GitHub/GrowthCurveAnalysis/GC_Data/")
 
@@ -143,6 +148,7 @@ GC_Data_Longer <- GC_Data_Longer[GC_Data_Longer$Mutant_BioRep != "Leo1-AID-osTIR
     scale_colour_manual(values = cols) + scale_fill_manual(values = cols)+  xlim(0,25) +  ylim(0,2.5) + facet_wrap(~Target, ncol = 3)
 
 }
+
 
 # ifelse(GC_Data_Reduced$Target == "Rtf1", "Rtf1isTarget", "Rtf1isnotTarget")
 
